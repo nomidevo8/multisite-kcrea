@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MPP_Giving_Link {
 
     private static $added_menus = []; // Track which menus we've added to
-    private static $target_locations = ['main-menu', 'header', 'footer', 'Header', 'Footer']; // Menu locations to target
+    private static $target_locations = ['main-menu', 'header', 'footer', 'Header', 'Footer', 'menu-1']; // Menu locations to target
 
     public static function init() {
         // Print menus in admin (optional)
@@ -24,7 +24,7 @@ class MPP_Giving_Link {
      */
     public static function print_selected_menus_info() {
         $locations = get_nav_menu_locations();
-
+    
         foreach ( self::$target_locations as $loc ) {
             if ( ! empty($locations[$loc]) ) {
                 $menu_obj = wp_get_nav_menu_object( $locations[$loc] );
@@ -85,7 +85,6 @@ class MPP_Giving_Link {
         // Refresh menu cache
         clean_post_cache( $menu_id );
 
-        error_log( "MPP Giving Link: Added to menu ID $menu_id" );
     }
 
     /**
