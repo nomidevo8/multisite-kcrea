@@ -1,0 +1,21 @@
+{
+    "name": "servtech/multi-purpose-plugin",
+    "description": "Modular multisite plugin with PSR-4 autoloading",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "ServtechMPP\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "nomidevo8",
+            "email": "nomideveloper628@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "stripe/stripe-php": "^19.0"
+    }
+}

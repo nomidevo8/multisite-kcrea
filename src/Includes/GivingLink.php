@@ -1,9 +1,8 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
+namespace ServtechMPP\Includes;
 
-class MPP_Giving_Link {
+if (!defined('ABSPATH')) exit;
+class GivingLink {
 
     private static $added_menus = []; // Track which menus we've added to
     private static $target_locations = ['main-menu', 'header', 'footer', 'Header', 'Footer', 'menu-1']; // Menu locations to target
