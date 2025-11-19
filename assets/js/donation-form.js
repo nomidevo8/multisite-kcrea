@@ -39,6 +39,7 @@ jQuery(document).ready(function ($) {
 
             $visibleSelect.empty().append('<option value="">Select</option>');
 
+            // Always add today as first option
             $visibleSelect.append(
                 `<option value="${formatDateValue(today)}">Today (${formatDateDisplay(today)})</option>`
             );
@@ -46,7 +47,7 @@ jQuery(document).ready(function ($) {
             let stepDays = 0, stepMonths = 0, stepYears = 0;
 
             switch (val) {
-                case 'daily': stepDays = 2; break;
+                case 'daily': stepDays = 1; break;
                 case 'weekly': stepDays = 7; break;
                 case 'every_two_week': stepDays = 14; break;
                 case 'monthly': stepMonths = 1; break;
@@ -55,9 +56,12 @@ jQuery(document).ready(function ($) {
 
             for (let i = 1; i <= 3; i++) {
                 const d = new Date(today);
-                if (stepDays) d.setDate(today.getDate() + stepDays * i);
-                if (stepMonths) d.setMonth(today.getMonth() + stepMonths * i);
-                if (stepYears) d.setFullYear(today.getFullYear() + stepYears * i);
+
+                // For daily, start at least 2 days from today
+                if (val === 'daily') d.setDate(today.getDate() + 3 + (i - 1) * stepDays);
+                else if (stepDays) d.setDate(today.getDate() + stepDays * i);
+                else if (stepMonths) d.setMonth(today.getMonth() + stepMonths * i);
+                else if (stepYears) d.setFullYear(today.getFullYear() + stepYears * i);
 
                 const label = `Next ${i} ${val.replace(/_/g, ' ')}${i > 1 ? 's' : ''}`;
                 $visibleSelect.append(
@@ -65,6 +69,7 @@ jQuery(document).ready(function ($) {
                 );
             }
         }
+
 
         $interval.on('change', updateBillingStartOptions);
         $visibleSelect.on('change', function () {

@@ -14,17 +14,16 @@ class DonationForm {
         add_action('fluentform/submission_inserted', [$this, 'handle_submission'], 10, 3);
     }
 
-        // Static initializer
     public static function init() {
         new self();
     }
 
-    /**
-     * Handle FluentForm submission and generate a Stripe payment link
-     */
     public function handle_submission($insertId, $insertData, $form)
     {
         try {
+            error_log('FFWCS MULTI-DONATION HANDLER');
+            error_log("Submission Data: " . print_r($insertData, true));
+
             $data = is_object($insertData) ? (array)$insertData : (array)$insertData;
 
             $stripe_secret = get_option('ffwcs_stripe_secret_key');
@@ -44,94 +43,100 @@ class DonationForm {
                 return;
             }
 
-            // 1️⃣ Create or retrieve Stripe Customer
+            // 1️⃣ Create Stripe Customer
             $customer = Customer::create([
                 'email' => $email,
                 'name'  => trim("$first_name $last_name"),
             ]);
 
-            // 2️⃣ Donation details
-            $amount    = (float)($data['donations'][0][0] ?? 0) * 100; // cents
-            $currency  = 'usd';
-            $frequency = strtolower($data['frequency'] ?? 'one time');
-            $raw_interval = strtolower($data['billing_interval'] ?? 'month');
+            // 2️⃣ Frequency / Interval logic
+            $currency      = 'usd';
+            $frequency     = strtolower($data['frequency'] ?? 'one time');
+            $raw_interval  = strtolower($data['billing_interval'] ?? 'month');
 
             $interval_map = [
                 'daily'          => 'day',
                 'weekly'         => 'week',
-                'every_two_week' => 'week', // double the amount later
+                'every_two_week' => 'week',
                 'monthly'        => 'month',
                 'yearly'         => 'year',
             ];
 
             $interval = $interval_map[$raw_interval] ?? 'month';
-            if ($raw_interval === 'every_two_week') {
-                $amount = $amount * 2;
+
+            // 3️⃣ Build line items for ALL donations
+            $line_items = [];
+
+            foreach ($data['donations'] as $donation) {
+                $amount  = (float)$donation[0] * 100;
+                $name    = $donation[1];
+
+                // every_two_week doubles amount
+                if ($raw_interval === 'every_two_week') {
+                    $amount = $amount * 2;
+                }
+
+                // Create product
+                if ($frequency === 'regularly') {
+                    $product = Product::create([
+                        'name' => $name . ' Subscription Donation',
+                    ]);
+
+                    // Recurring price
+                    $price = Price::create([
+                        'unit_amount' => $amount,
+                        'currency'    => $currency,
+                        'recurring'   => ['interval' => $interval],
+                        'product'     => $product->id,
+                    ]);
+                } else {
+                    $product = Product::create([
+                        'name' => $name . ' One-Time Donation',
+                    ]);
+
+                    // One-time price
+                    $price = Price::create([
+                        'unit_amount' => $amount,
+                        'currency'    => $currency,
+                        'product'     => $product->id,
+                    ]);
+                }
+
+                // Add to line items array
+                $line_items[] = [
+                    'price'    => $price->id,
+                    'quantity' => 1,
+                ];
             }
-            $donation_type = $data['donations'][0][1] ?? 'Donation';
 
+            // Determine mode
+            $mode = ($frequency === 'regularly') ? 'subscription' : 'payment';
 
-            // 3️⃣ Create Product & Price
-            if ($frequency === 'regularly') {
-                $product = Product::create([
-                    'name' => $donation_type . 'Donation Subscription', 
-                ]);
-
-                $price = Price::create([
-                    'unit_amount' => $amount,
-                    'currency'    => $currency,
-                    'recurring'   => ['interval' => $interval],
-                    'product'     => $product->id,
-                ]);
-
-                $mode = 'subscription';
-            } else {
-                $product = Product::create([
-                    'name' => $donation_type . ' One-Time Donation',
-                ]);
-
-
-                $price = Price::create([
-                    'unit_amount' => $amount,
-                    'currency'    => $currency,
-                    'product'     => $product->id,
-                ]);
-
-                $mode = 'payment';
-            }
-
-            // 4️⃣ Create Checkout Session but do not redirect
-            // 4️⃣ Create Checkout Session but do not redirect
+            // 4️⃣ Build checkout session body
             $checkout_session_data = [
                 'customer'             => $customer->id,
                 'payment_method_types' => ['card'],
                 'mode'                 => $mode,
-                'line_items'           => [[
-                    'price'    => $price->id,
-                    'quantity' => 1,
-                ]],
+                'line_items'           => $line_items,
                 'success_url'          => site_url('/thank-you?session_id={CHECKOUT_SESSION_ID}'),
                 'cancel_url'           => site_url('/give-away'),
             ];
 
-            // ✅ Only for subscriptions: set trial_end to delay first payment
-            if ($frequency === 'regularly' && !empty($data['billing_start_date'])) {
-                $start_timestamp = strtotime($data['billing_start_date'] . ' 00:00:00 UTC');
-                if ($start_timestamp > time()) { // only if start date is in the future
+            // 5️⃣ Handle future start date
+            if ($mode === 'subscription' && !empty($data['billing_start_date'])) {
+                $start_timestamp = strtotime($data['billing_start_date'] . " 00:00:00 UTC");
+
+                if ($start_timestamp > time()) {
                     $checkout_session_data['subscription_data'] = [
                         'trial_end' => $start_timestamp
                     ];
                 }
             }
 
+            // 6️⃣ Create session
             $checkout_session = Session::create($checkout_session_data);
 
-
-            // 5️⃣ Send the payment link back to the user (instead of redirect)
-            // Example: you can store it in session, send via email, or return JSON
-            // Here we just redirect to the link for simplicity:
-
-                 // 5️⃣ Send JSON response if AJAX, else redirect
+            // AJAX OR redirect
             if (defined('DOING_AJAX') && DOING_AJAX) {
                 wp_send_json_success([
                     'result' => [
@@ -141,10 +146,11 @@ class DonationForm {
             } else {
                 wp_safe_redirect($checkout_session->url);
             }
+
             exit;
 
         } catch (\Throwable $e) {
-            error_log('Stripe error: ' . $e->getMessage());
+            error_log("Stripe Error: " . $e->getMessage());
             wp_die('Payment link creation failed: ' . $e->getMessage());
         }
     }
