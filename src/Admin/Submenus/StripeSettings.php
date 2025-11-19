@@ -1,5 +1,5 @@
 <?php
-namespace ServtechMPP\Admin\Stripe;
+namespace ServtechMPP\Admin\Submenus;
 
 if (!defined('ABSPATH')) exit;
 

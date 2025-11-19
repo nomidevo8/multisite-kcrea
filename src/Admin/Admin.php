@@ -10,7 +10,7 @@ class Admin {
         add_action('admin_menu', [__CLASS__, 'register_admin_menu']);
 
         // Initialize Stripe submenu class
-        \ServtechMPP\Admin\Stripe\StripeSettings::init();
+        \ServtechMPP\Admin\Submenus\StripeSettings::init();
     }
 
     public static function register_admin_menu() {
