@@ -87,13 +87,12 @@ class MenuPageVisibility
         if ($menu_id) {
             $menu_items = wp_get_nav_menu_items($menu_id);
             foreach ($menu_items as $item) {
-                if ($item->object === 'page') {
-                    $pages[] = [
-                        'ID' => $item->object_id,
-                        'title' => get_the_title($item->object_id),
-                        'visible' => get_post_meta($item->object_id, '_menu_visible', true) !== '0' ? 1 : 0
-                    ];
-                }
+                $pages[] = [
+                    'ID' => $item->ID,
+                    'title' => $item->title,
+                    'type' => $item->object, // page, custom, category, etc.
+                    'visible' => get_post_meta($item->object_id, '_menu_visible', true) !== '0' ? 1 : 0
+                ];
             }
         }
 
