@@ -88,7 +88,7 @@ class MenuPageVisibility
             $menu_items = wp_get_nav_menu_items($menu_id);
             foreach ($menu_items as $item) {
                 $pages[] = [
-                    'ID' => $item->ID,
+                    'ID' => ($item->object_id ?: $item->ID),
                     'title' => $item->title,
                     'type' => $item->object, // page, custom, category, etc.
                     'visible' => get_post_meta($item->object_id, '_menu_visible', true) !== '0' ? 1 : 0
@@ -102,7 +102,9 @@ class MenuPageVisibility
     public static function wp_nav_menu_objects_handler($items)
     {
         foreach ($items as $key => $item) {
-            $visible = get_post_meta($item->object_id, '_menu_visible', true);
+            $target_id = ($item->object_id ?: $item->ID);
+            $visible = get_post_meta($target_id, '_menu_visible', true);
+
             if ($visible === '0')
                 unset($items[$key]);
         }
