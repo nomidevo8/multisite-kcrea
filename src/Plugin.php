@@ -20,6 +20,9 @@ class Plugin {
         
         // Initialize FluentForm Stripe Donation Form
         \ServtechMPP\Includes\FluentDonationFormHook\DonationForm::init();
+
+        // Initialize Minitries Setting
+        \ServtechMPP\Includes\MinistriesGroup\MinistriesVisibility::init();
     }
 
 

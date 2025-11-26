@@ -4,7 +4,7 @@ namespace ServtechMPP\Public;
 if (!defined('ABSPATH')) exit;
 
 class PublicScripts {
-    private static $version = "1.0.0.01";
+    private static $version = "1.0.0.013433";
     public static function init() {
         // Enqueue frontend scripts
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_scripts']);

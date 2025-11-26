@@ -19,14 +19,14 @@ jQuery(document).ready(function ($) {
     }
 
     // 1. Remove all empty inner containers inside ministries-group
-    $('.ministries-group .elementor-element, .ministries-group .e-con').each(function () {
+    $('.ministries-group > .elementor-element, .ministries-group > div > .e-con').each(function () {
         if (isEmpty(this)) {
             $(this).remove();
         }
     });
 
     // 2. Remove parent containers that became empty
-    $('.ministries-group .elementor-element, .ministries-group .e-con').each(function () {
+    $('.ministries-group > .elementor-element, .ministries-group > div > .e-con').each(function () {
         if (isEmpty(this)) {
             $(this).remove();
         }
