@@ -62,12 +62,13 @@ jQuery(document).ready(function($) {
                                 <td>${page.title}</td>
                                 <td>
                                     <label class="dev-switch">
-                                        <input type="checkbox" class="page-visibility-toggle" data-page-id="${page.ID}" ${checked}>
+                                        <input type="checkbox" class="page-visibility-toggle" data-menu-item-id="${page.ID}" ${checked}>
                                         <span class="slider round"></span>
                                     </label>
                                 </td>
                             </tr>
                         `);
+
                     });
                 }
             },
@@ -86,12 +87,12 @@ jQuery(document).ready(function($) {
 
     // Toggle visibility
     $('#menu-pages-tbody').on('change', '.page-visibility-toggle', function() {
-        const page_id = $(this).data('page-id');
+        const menu_item_id = $(this).data('menu-item-id');
         const visible = $(this).is(':checked') ? 1 : 0;
 
         $.post(MenuVisibility.ajax_url, {
             action: 'update_page_visibility',
-            page_id: page_id,
+            menu_item_id: menu_item_id,
             visible: visible,
             nonce: MenuVisibility.nonce
         });

@@ -30,7 +30,7 @@ class LoadAdminEnqeue
             'menu-visibility-js',
             plugins_url('Admin/assets/js/menu-visibility.js', dirname(__DIR__)),
             ['jquery', 'spin-js'],
-            '1.0.0',
+            '1.0.0.01',
             true
         );
 
